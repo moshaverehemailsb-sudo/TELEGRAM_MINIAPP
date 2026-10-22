@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>تحلیل آزمون کنکور</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f1f5f9;
+            --card: #fff;
+            --ink: #1e293b;
+            --muted: #64748b;
+            --line: #e2e8f0;
+            --brand: #4f46e5;
+            --brand2: #7c3aed;
+            --ok: #15803d;
+            --bad: #b91c1c;
+            --blank: #475569;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--ink);
+            font-family: 'Vazirmatn', Tahoma, sans-serif;
+            padding-bottom: 88px;
+        }
+
+        header.top {
+            background: linear-gradient(135deg, var(--brand), var(--brand2));
+            color: #fff;
+            padding: 20px 16px 26px;
+            border-radius: 0 0 22px 22px;
+        }
+
+        header.top h1 {
+            margin: 0;
+            font-size: 19px;
+        }
+
+        header.top p {
+            margin: 4px 0 0;
+            font-size: 13px;
+            opacity: .9;
+        }
+
+        main {
+            padding: 14px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 14px;
+            margin-bottom: 14px;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, .05);
+        }
+
+        .card h2 {
+            font-size: 15px;
+            margin: 0 0 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+        }
+
+        .stat {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 12px;
+        }
+
+        .stat .label {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .stat .value {
+            font-size: 20px;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .b-ok {
+            background: #dcfce7;
+            color: var(--ok);
+        }
+
+        .b-bad {
+            background: #fee2e2;
+            color: var(--bad);
+        }
+
+        .b-blank {
+            background: #e2e8f0;
+            color: var(--blank);
+        }
+
+        .chip-row {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .meta {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 4px;
+        }
+
+        .exam-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .exam-item .arrow {
+            color: var(--muted);
+            font-size: 18px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        td,
+        th {
+            padding: 8px;
+            border-bottom: 1px solid var(--line);
+            text-align: center;
+        }
+
+        th {
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        .reason {
+            margin: 10px 0 0;
+        }
+
+        .reason b {
+            font-size: 12px;
+            color: var(--muted);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .item {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 8px 10px;
+            margin-bottom: 4px;
+            font-size: 13px;
+            line-height: 1.8;
+        }
+
+        .note {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            line-height: 1.9;
+        }
+
+        .empty {
+            text-align: center;
+            color: var(--muted);
+            padding: 30px 10px;
+        }
+
+        .loader {
+            text-align: center;
+            color: var(--muted);
+            padding: 30px;
+        }
+
+        .error {
+            background: #fee2e2;
+            color: var(--bad);
+            border-radius: 12px;
+            padding: 12px;
+            font-size: 14px;
+        }
+
+        .back {
+            display: inline-block;
+            margin-bottom: 10px;
+            color: var(--brand);
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        canvas {
+            max-height: 260px;
+        }
+
+        nav.bottom {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #fff;
+            border-top: 1px solid var(--line);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0 calc(8px + env(safe-area-inset-bottom, 0px));
+        }
+
+        nav.bottom a {
+            text-decoration: none;
+            color: var(--muted);
+            font-size: 13px;
+            text-align: center;
+            flex: 1;
+            padding: 4px;
+        }
+
+        nav.bottom a.active {
+            color: var(--brand);
+            font-weight: 700;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="top">
+        <h1 id="hello">در حال بارگذاری...</h1>
+        <p id="sub"></p>
+    </header>
+
+    <main id="view">
+        <div class="loader">در حال بارگذاری...</div>
+    </main>
+
+    <nav class="bottom">
+        <a href="#/" data-nav="dashboard">داشبورد</a>
+        <a href="#/exams" data-nav="exams">آزمون‌ها</a>
+        <a href="#/progress" data-nav="progress">پیشرفت</a>
+    </nav>
+
+    <script>
+        const tg = window.Telegram && window.Telegram.WebApp;
+        if (tg) { tg.ready(); tg.expand(); }
+
+        // Development only: open the page as http://127.0.0.1:8000/?dev=900000001
+        const devId = new URLSearchParams(location.search).get("dev");
+
+        const REASON_LABELS = {
+            lucky: "شانسی", long_solution: "راه حل طولانی",
+            careless: "بی‌دقتی", knowledge_gap: "مشکل علمی",
+            budget: "نرسیدن به بودجه‌بندی", time: "کم آوردن زمان", unsolved: "نتوانستم حل کنم",
+        };
+        const SUBJECT_COLORS = { math: "#4f46e5", physics: "#0891b2", chemistry: "#16a34a" };
+        const REASON_COLORS = ["#86efac", "#4ade80", "#fca5a5", "#f87171", "#cbd5e1", "#94a3b8", "#64748b"];
+
+        const charts = [];
+
+        function esc(value) {
+            return String(value ?? "").replace(/[&<>"']/g, c => (
+                { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+            ));
+        }
+
+        function fmt(value) {
+            return value == null ? "—" : Number(value).toLocaleString("fa-IR");
+        }
+
+        function authHeaders() {
+            if (tg && tg.initData) return { "X-Telegram-Init-Data": tg.initData };
+            if (devId) return { "X-Dev-Telegram-Id": devId };
+            return {};
+        }
+
+        async function api(path) {
+            const res = await fetch("/api" + path, { headers: authHeaders() });
+            let body = {};
+            try { body = await res.json(); } catch (_) { }
+            if (!res.ok) throw new Error(body.detail || "ارتباط با سرور برقرار نشد.");
+            return body;
+        }
+
+        function clearCharts() {
+            while (charts.length) charts.pop().destroy();
+        }
+
+        function makeChart(id, config) {
+            const el = document.getElementById(id);
+            if (!el || typeof Chart === "undefined") return;
+            charts.push(new Chart(el, config));
+        }
+
+        function drawLineChart(id, points, label, getter, reverse = false) {
+            makeChart(id, {
+                type: "line",
+                data: {
+                    labels: points.map(p => p.exam_name),
+                    datasets: [{
+                        label,
+                        data: points.map(getter),
+                        borderColor: "#4f46e5",
+                        backgroundColor: "rgba(79, 70, 229, .15)",
+                        tension: 0.3, fill: true, spanGaps: true,
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { reverse } },
+                },
+            });
+        }
+
+        async function loadProfile() {
+            try {
+                const me = await api("/me");
+                document.getElementById("hello").textContent = `سلام ${me.full_name}`;
+                document.getElementById("sub").textContent = `${fmt(me.exam_count)} آزمون ثبت شده`;
+            } catch (err) {
+                document.getElementById("hello").textContent = "برگه تحلیل آزمون";
+                document.getElementById("sub").textContent = "";
+            }
+        }
+
+        async function renderDashboard() {
+            const [exams, progress] = await Promise.all([api("/exams"), api("/progress")]);
+            const view = document.getElementById("view");
+
+            if (!exams.length) {
+                view.innerHTML = `<div class="card empty">هنوز آزمونی برای شما ثبت نشده است.</div>`;
+                return;
+            }
+
+            const last = exams[exams.length - 1];
+            view.innerHTML = `
+    <div class="grid" style="margin-bottom:14px">
+      <div class="stat"><div class="label">تراز کل آخرین آزمون</div><div class="value">${fmt(last.overall_traz)}</div></div>
+      <div class="stat"><div class="label">رتبه کل آخرین آزمون</div><div class="value">${fmt(last.overall_rank)}</div></div>
+      <div class="stat"><div class="label">تعداد آزمون‌ها</div><div class="value">${fmt(exams.length)}</div></div>
+    </div>
+
+    <div class="card">
+      <h2>آخرین آزمون</h2>
+      <a class="exam-item" href="#/exams/${last.id}">
+        <div>
+          <b>${esc(last.name)}</b>
+          <div class="meta">${esc(last.held_on)}</div>
+          <div class="chip-row" style="margin-top:8px">
+            <span class="badge b-ok">صحیح ${fmt(last.totals.correct)}</span>
+            <span class="badge b-bad">غلط ${fmt(last.totals.wrong)}</span>
+            <span class="badge b-blank">نزده ${fmt(last.totals.blank)}</span>
+          </div>
+        </div>
+        <span class="arrow">←</span>
+      </a>
+    </div>
+
+    <div class="card"><h2>روند تراز کل</h2><canvas id="c-traz"></canvas></div>
+    <div class="card"><h2>روند رتبه کل</h2><canvas id="c-rank"></canvas></div>`;
+
+            drawLineChart("c-traz", progress, "تراز کل", p => p.overall_traz);
+            drawLineChart("c-rank", progress, "رتبه کل", p => p.overall_rank, true);
+        }
+
+        async function renderExams() {
+            const exams = await api("/exams");
+            const view = document.getElementById("view");
+
+            if (!exams.length) {
+                view.innerHTML = `<div class="card empty">هنوز آزمونی ثبت نشده است.</div>`;
+                return;
+            }
+
+            view.innerHTML = exams.slice().reverse().map(e => `
+    <a class="card exam-item" href="#/exams/${e.id}">
+      <div>
+        <b>${esc(e.name)}</b>
+        <div class="meta">${esc(e.held_on)} · تراز: ${fmt(e.overall_traz)} · رتبه کل: ${fmt(e.overall_rank)}</div>
+        <div class="chip-row" style="margin-top:8px">
+          <span class="badge b-ok">صحیح ${fmt(e.totals.correct)}</span>
+          <span class="badge b-bad">غلط ${fmt(e.totals.wrong)}</span>
+          <span class="badge b-blank">نزده ${fmt(e.totals.blank)}</span>
+        </div>
+      </div>
+      <span class="arrow">←</span>
+    </a>`).join("");
+        }
+
+        async function renderExam(id) {
+            const e = await api(`/exams/${encodeURIComponent(id)}`);
+            const view = document.getElementById("view");
+
+            const subjectsHtml = e.subjects.map(s => {
+                const reasonsHtml = s.reasons.length
+                    ? s.reasons.map(r => `
+          <div class="reason">
+            <b>${esc(r.label)}</b>
+            ${r.items.map(item => `<div class="item">${esc(item)}</div>`).join("")}
+          </div>`).join("")
+                    : `<div class="meta">دلیلی ثبت نشده است.</div>`;
+
+                return `
+      <div class="card">
+        <h2>${esc(s.subject_name)} <span class="badge b-blank">رتبه ${fmt(s.rank)}</span></h2>
+        <div class="chip-row">
+          <span class="badge b-ok">صحیح ${fmt(s.correct)}</span>
+          <span class="badge b-bad">غلط ${fmt(s.wrong)}</span>
+          <span class="badge b-blank">نزده ${fmt(s.blank)}</span>
+        </div>
+        ${reasonsHtml}
+      </div>`;
+            }).join("");
+
+            const notesHtml = e.notes.length
+                ? e.notes.map(n => `<div class="note"><b>${esc(n.label)}:</b> ${esc(n.text)}</div>`).join("")
+                : `<div class="meta">یادداشتی ثبت نشده است.</div>`;
+
+            view.innerHTML = `
+    <a class="back" href="#/exams">→ بازگشت به آزمون‌ها</a>
+
+    <div class="card">
+      <h2>${esc(e.name)}</h2>
+      <table>
+        <tr><th>تاریخ</th><th>تراز کل</th><th>رتبه کل</th><th>رتبه منطقه</th></tr>
+        <tr><td>${esc(e.held_on)}</td><td>${fmt(e.overall_traz)}</td><td>${fmt(e.overall_rank)}</td><td>${fmt(e.region_rank)}</td></tr>
+      </table>
+      <div class="chip-row" style="margin-top:12px">
+        <span class="badge b-ok">صحیح ${fmt(e.totals.correct)}</span>
+        <span class="badge b-bad">غلط ${fmt(e.totals.wrong)}</span>
+        <span class="badge b-blank">نزده ${fmt(e.totals.blank)}</span>
+      </div>
+    </div>
+
+    ${subjectsHtml}
+
+    <div class="card">
+      <h2>جمع‌بندی و راهکارها</h2>
+      ${notesHtml}
+    </div>`;
+        }
+
+        async function renderProgress() {
+            const [points, reasons] = await Promise.all([api("/progress"), api("/progress/reasons")]);
+            const view = document.getElementById("view");
+
+            if (!points.length) {
+                view.innerHTML = `<div class="card empty">برای نمایش پیشرفت، حداقل یک آزمون لازم است.</div>`;
+                return;
+            }
+
+            view.innerHTML = `
+    <div class="card"><h2>روند تراز کل</h2><canvas id="p-traz"></canvas></div>
+    <div class="card"><h2>روند رتبه کل</h2><canvas id="p-rank"></canvas></div>
+    <div class="card"><h2>رتبه هر درس</h2><canvas id="p-subjects"></canvas></div>
+    <div class="card"><h2>دلایل پاسخ‌ها در هر آزمون</h2><canvas id="p-reasons"></canvas></div>`;
+
+            drawLineChart("p-traz", points, "تراز کل", p => p.overall_traz);
+            drawLineChart("p-rank", points, "رتبه کل", p => p.overall_rank, true);
+
+            makeChart("p-subjects", {
+                type: "line",
+                data: {
+                    labels: points.map(p => p.exam_name),
+                    datasets: Object.entries(SUBJECT_COLORS).map(([code, color]) => ({
+                        label: code === "math" ? "ریاضی" : code === "physics" ? "فیزیک" : "شیمی",
+                        data: points.map(p => (p.subjects[code] ? p.subjects[code].rank : null)),
+                        borderColor: color, backgroundColor: color, tension: 0.3, spanGaps: true,
+                    })),
+                },
+                options: { responsive: true, scales: { y: { reverse: true } } },
+            });
+
+            const codes = Object.keys(REASON_LABELS);
+            makeChart("p-reasons", {
+                type: "bar",
+                data: {
+                    labels: reasons.map(r => r.exam_name),
+                    datasets: codes.map((code, i) => ({
+                        label: REASON_LABELS[code],
+                        data: reasons.map(r => r.counts[code] || 0),
+                        backgroundColor: REASON_COLORS[i],
+                    })),
+                },
+                options: { responsive: true, scales: { x: { stacked: true }, y: { stacked: true } } },
+            });
+        }
+
+        async function render() {
+            clearCharts();
+            const hash = location.hash.replace(/^#\/?/, "");
+            let route = "dashboard";
+            let examId = null;
+            if (hash.startsWith("exams/")) { route = "exam"; examId = hash.split("/")[1]; }
+            else if (hash === "exams") route = "exams";
+            else if (hash === "progress") route = "progress";
+
+            const navName = route === "exam" ? "exams" : route;
+            document.querySelectorAll("nav.bottom a").forEach(a => {
+                a.classList.toggle("active", a.dataset.nav === navName);
+            });
+
+            const view = document.getElementById("view");
+            view.innerHTML = `<div class="loader">در حال بارگذاری...</div>`;
+
+            try {
+                if (route === "exam") await renderExam(examId);
+                else if (route === "exams") await renderExams();
+                else if (route === "progress") await renderProgress();
+                else await renderDashboard();
+            } catch (err) {
+                view.innerHTML = `<div class="error">${esc(err.message)}</div>`;
+            }
+        }
+
+        window.addEventListener("hashchange", render);
+
+        (async () => {
+            await loadProfile();
+            await render();
+        })();
+    </script>
+</body>
+
+</html>

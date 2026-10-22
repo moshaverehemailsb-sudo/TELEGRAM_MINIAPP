@@ -1,0 +1,7 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+backend/my_student.json
+backend/sample_student.json
+backend/sample_exam.json
