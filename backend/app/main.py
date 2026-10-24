@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from .config import get_settings
-from .routers import advisor, student
+from .routers import admin, advisor, links, student
 
 settings = get_settings()
 
@@ -22,7 +22,9 @@ app = FastAPI(
 )
 
 app.include_router(student.router)
+app.include_router(links.router)
 app.include_router(advisor.router)
+app.include_router(admin.router)
 
 
 @app.get("/api/health", tags=["system"])

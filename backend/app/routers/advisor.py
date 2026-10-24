@@ -1,103 +1,132 @@
+from datetime import datetime, timedelta, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
-from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
+from pydantic import BaseModel
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from .. import schemas as s
-from ..auth import Identity, get_identity
+from ..auth import Identity, require_advisor
+from ..config import get_settings
 from ..database import get_db
-from ..models import Exam, Student, Subject
-from ..services.exams import exams_for_student, to_summary
-from ..services.form_import import ExamFormIn, build_exam
+from ..models import AdvisorStudent, Exam, InviteCode, Student
+from ..services.exams import exams_for_student, to_detail, to_summary
+from ..services.invites import generate_code, hash_code
+from ..services.links import is_linked
 
 router = APIRouter(prefix="/api/advisor", tags=["advisor"])
 
-
-class StudentCreate(BaseModel):
-    telegram_user_id: int = Field(gt=0)
-    full_name: str = Field(min_length=2, max_length=120)
+# Same message for "does not exist" and "not linked to you", so IDs cannot be probed.
+NOT_FOUND = "یافت نشد."
 
 
-class StudentOut(BaseModel):
+class InviteCreatedOut(BaseModel):
+    code: str  # shown once, never stored in plain text
+    expires_at: datetime
+
+
+class InviteStatusOut(BaseModel):
     id: int
-    telegram_user_id: int
+    status: str  # pending | used | expired
+    created_at: datetime
+    expires_at: datetime
+
+
+class LinkedStudentOut(BaseModel):
+    id: int
     full_name: str
+    linked_at: datetime
+    exam_count: int
 
 
-def require_advisor(identity: Identity = Depends(get_identity)) -> Identity:
-    if not identity.is_advisor:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="فقط مشاوران به این بخش دسترسی دارند.",
+def _invite_status(invite: InviteCode, now: datetime) -> str:
+    if invite.used_at is not None:
+        return "used"
+    if invite.expires_at <= now:
+        return "expired"
+    return "pending"
+
+
+def _ensure_linked(db: Session, advisor_id: int, student_id: int) -> None:
+    if not is_linked(db, advisor_id, student_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=NOT_FOUND)
+
+
+@router.post("/invites", response_model=InviteCreatedOut, status_code=status.HTTP_201_CREATED)
+def create_invite(identity: Identity = Depends(require_advisor), db: Session = Depends(get_db)):
+    ttl_days = get_settings().invite_code_ttl_days
+    code = generate_code()
+    expires_at = datetime.now(timezone.utc) + timedelta(days=ttl_days)
+    db.add(
+        InviteCode(
+            advisor_id=identity.advisor_id,
+            code_hash=hash_code(code),
+            expires_at=expires_at,
         )
-    return identity
+    )
+    db.commit()
+    return InviteCreatedOut(code=code, expires_at=expires_at)
 
 
-@router.get("/students", response_model=list[StudentOut])
-def list_students(_: Identity = Depends(require_advisor), db: Session = Depends(get_db)):
-    students = db.scalars(select(Student).order_by(Student.full_name)).all()
+@router.get("/invites", response_model=list[InviteStatusOut])
+def list_invites(identity: Identity = Depends(require_advisor), db: Session = Depends(get_db)):
+    now = datetime.now(timezone.utc)
+    invites = db.scalars(
+        select(InviteCode)
+        .where(InviteCode.advisor_id == identity.advisor_id)
+        .order_by(InviteCode.created_at.desc())
+    ).all()
     return [
-        StudentOut(id=st.id, telegram_user_id=st.telegram_user_id, full_name=st.full_name)
-        for st in students
+        InviteStatusOut(
+            id=inv.id,
+            status=_invite_status(inv, now),
+            created_at=inv.created_at,
+            expires_at=inv.expires_at,
+        )
+        for inv in invites
     ]
 
 
-@router.post("/students", response_model=StudentOut, status_code=status.HTTP_201_CREATED)
-def create_student(
-    payload: StudentCreate,
-    _: Identity = Depends(require_advisor),
-    db: Session = Depends(get_db),
-):
-    existing = db.scalar(select(Student).where(Student.telegram_user_id == payload.telegram_user_id))
-    if existing is not None:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="این شناسه تلگرام قبلاً ثبت شده است.",
+@router.get("/students", response_model=list[LinkedStudentOut])
+def list_students(identity: Identity = Depends(require_advisor), db: Session = Depends(get_db)):
+    rows = db.execute(
+        select(Student.id, Student.full_name, AdvisorStudent.linked_at, func.count(Exam.id))
+        .join(AdvisorStudent, AdvisorStudent.student_id == Student.id)
+        .outerjoin(Exam, Exam.student_id == Student.id)
+        .where(
+            AdvisorStudent.advisor_id == identity.advisor_id,
+            AdvisorStudent.is_active.is_(True),
         )
-    student = Student(telegram_user_id=payload.telegram_user_id, full_name=payload.full_name.strip())
-    db.add(student)
-    db.commit()
-    db.refresh(student)
-    return StudentOut(id=student.id, telegram_user_id=student.telegram_user_id, full_name=student.full_name)
+        .group_by(Student.id, Student.full_name, AdvisorStudent.linked_at)
+        .order_by(Student.full_name)
+    ).all()
+    return [
+        LinkedStudentOut(id=r[0], full_name=r[1], linked_at=r[2], exam_count=r[3])
+        for r in rows
+    ]
 
 
-@router.post(
-    "/students/{student_id}/exams",
-    response_model=s.ExamSummaryOut,
-    status_code=status.HTTP_201_CREATED,
-)
-def create_exam(
+@router.get("/students/{student_id}/exams", response_model=list[s.ExamSummaryOut])
+def list_student_exams(
     student_id: int,
-    payload: ExamFormIn,
-    _: Identity = Depends(require_advisor),
+    identity: Identity = Depends(require_advisor),
     db: Session = Depends(get_db),
 ):
-    student = db.get(Student, student_id)
-    if student is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="دانش‌آموز یافت نشد.")
+    _ensure_linked(db, identity.advisor_id, student_id)
+    exams = db.scalars(exams_for_student(student_id)).all()
+    return [to_summary(e) for e in exams]
 
-    subjects = {subj.code: subj for subj in db.scalars(select(Subject))}
-    if not subjects:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="درس‌ها در دیتابیس تعریف نشده‌اند. init_db را اجرا کنید.",
-        )
 
-    try:
-        exam = build_exam(student, payload, subjects)
-    except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
+@router.get("/exams/{exam_id}", response_model=s.ExamDetailOut)
+def get_exam(
+    exam_id: int,
+    identity: Identity = Depends(require_advisor),
+    db: Session = Depends(get_db),
+):
+    exam_row = db.get(Exam, exam_id)
+    if exam_row is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=NOT_FOUND)
+    _ensure_linked(db, identity.advisor_id, exam_row.student_id)
 
-    db.add(exam)
-    try:
-        db.commit()
-    except IntegrityError:
-        db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="این آزمون برای این دانش‌آموز قبلاً ثبت شده است.",
-        )
-
-    saved = db.scalar(exams_for_student(student.id).where(Exam.id == exam.id))
-    return to_summary(saved)
+    exam = db.scalar(exams_for_student(exam_row.student_id).where(Exam.id == exam_id))
+    return to_detail(exam)

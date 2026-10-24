@@ -1,0 +1,675 @@
+﻿<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>پنل مشاور</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f1f5f9;
+            --card: #fff;
+            --ink: #0f172a;
+            --muted: #64748b;
+            --line: #e2e8f0;
+            --soft: #f8fafc;
+            --brand: #4f46e5;
+            --brand2: #7c3aed;
+            --ok: #15803d;
+            --okbg: #dcfce7;
+            --bad: #b91c1c;
+            --badbg: #fee2e2;
+            --blank: #334155;
+            --blankbg: #e2e8f0;
+            --warn: #92400e;
+            --warnbg: #fef3c7;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--ink);
+            font-family: 'Vazirmatn', Tahoma, sans-serif;
+            padding-bottom: 40px;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, var(--brand), var(--brand2));
+            color: #fff;
+            padding: calc(20px + env(safe-area-inset-top, 0px)) 18px 56px;
+            border-radius: 0 0 28px 28px;
+        }
+
+        .hero h1 {
+            margin: 0;
+            font-size: 19px;
+            font-weight: 800;
+        }
+
+        .hero p {
+            margin: 4px 0 0;
+            font-size: 13px;
+            opacity: .9;
+        }
+
+        .wrap {
+            max-width: 720px;
+            margin: -38px auto 0;
+            padding: 0 14px;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, .06);
+        }
+
+        .card-title {
+            font-size: 15px;
+            font-weight: 800;
+            margin: 0 0 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-title small {
+            font-size: 12px;
+            color: var(--muted);
+            font-weight: 500;
+        }
+
+        .row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .grow {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .meta {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 3px;
+        }
+
+        .arrow {
+            color: var(--muted);
+            font-size: 20px;
+            flex: none;
+        }
+
+        .avatar {
+            flex: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            background: #eef2ff;
+            color: var(--brand);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+        }
+
+        .chips {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .chip {
+            font-size: 12px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 999px;
+        }
+
+        .c-ok {
+            background: var(--okbg);
+            color: var(--ok);
+        }
+
+        .c-bad {
+            background: var(--badbg);
+            color: var(--bad);
+        }
+
+        .c-blank {
+            background: var(--blankbg);
+            color: var(--blank);
+        }
+
+        .c-rank {
+            background: #eef2ff;
+            color: #3730a3;
+        }
+
+        .c-pending {
+            background: var(--warnbg);
+            color: var(--warn);
+        }
+
+        .c-used {
+            background: var(--okbg);
+            color: var(--ok);
+        }
+
+        .c-expired {
+            background: var(--blankbg);
+            color: var(--blank);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .stat {
+            background: var(--soft);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 10px;
+        }
+
+        .stat .l {
+            font-size: 11px;
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        .stat .v {
+            font-size: 17px;
+            font-weight: 800;
+            margin-top: 3px;
+        }
+
+        .bar {
+            display: flex;
+            height: 8px;
+            border-radius: 999px;
+            overflow: hidden;
+            background: var(--line);
+            margin-top: 10px;
+        }
+
+        .bar span {
+            display: block;
+            height: 100%;
+        }
+
+        .b-ok {
+            background: #16a34a;
+        }
+
+        .b-bad {
+            background: #dc2626;
+        }
+
+        .b-blank {
+            background: #94a3b8;
+        }
+
+        .subj-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
+        }
+
+        .group-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--muted);
+            margin: 12px 0 6px;
+        }
+
+        .refs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .ref {
+            background: var(--soft);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 3px 8px;
+            font-size: 12px;
+        }
+
+        .note {
+            background: var(--soft);
+            border-radius: 12px;
+            padding: 10px 12px;
+            margin-top: 8px;
+            font-size: 13px;
+            line-height: 1.9;
+        }
+
+        .note b {
+            display: block;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .btn {
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 700;
+            padding: 11px 18px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--brand), var(--brand2));
+            color: #fff;
+            cursor: pointer;
+            box-shadow: 0 8px 18px rgba(79, 70, 229, .25);
+        }
+
+        .btn.ghost {
+            background: #fff;
+            color: var(--ink);
+            border: 1px solid #cbd5e1;
+            box-shadow: none;
+        }
+
+        .btn[disabled] {
+            opacity: .5;
+            cursor: not-allowed;
+        }
+
+        .code-box {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+            background: #eef2ff;
+            border: 1px dashed #a5b4fc;
+            border-radius: 14px;
+            padding: 14px;
+            margin-top: 12px;
+        }
+
+        .code-value {
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: 3px;
+            direction: ltr;
+            color: #3730a3;
+        }
+
+        .warn-note {
+            background: var(--warnbg);
+            color: var(--warn);
+            border-radius: 12px;
+            padding: 10px 12px;
+            font-size: 13px;
+            line-height: 1.8;
+            margin-top: 12px;
+        }
+
+        .invite-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--line);
+            font-size: 13px;
+        }
+
+        .invite-row:last-child {
+            border-bottom: none;
+        }
+
+        .back {
+            display: inline-block;
+            color: var(--brand);
+            font-weight: 700;
+            font-size: 14px;
+            text-decoration: none;
+            margin: 4px 2px 12px;
+        }
+
+        .notice {
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin-bottom: 12px;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .n-ok {
+            background: var(--okbg);
+            color: var(--ok);
+        }
+
+        .n-err {
+            background: var(--badbg);
+            color: var(--bad);
+        }
+
+        .empty {
+            text-align: center;
+            color: var(--muted);
+            padding: 24px 10px;
+            font-size: 14px;
+            line-height: 1.9;
+        }
+
+        .error {
+            background: var(--badbg);
+            color: var(--bad);
+            border-radius: 14px;
+            padding: 14px;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .loader {
+            display: flex;
+            justify-content: center;
+            padding: 40px 0;
+        }
+
+        .spinner {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 3px solid var(--line);
+            border-top-color: var(--brand);
+            animation: spin .8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .readonly {
+            font-size: 12px;
+            color: var(--muted);
+            text-align: center;
+            margin: 18px 0 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="hero">
+        <h1 id="title">پنل مشاور</h1>
+        <p id="sub">در حال اتصال...</p>
+    </header>
+
+    <main class="wrap">
+        <div id="notice"></div>
+        <div id="view">
+            <div class="loader">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </main>
+    <p class="readonly">مشاور فقط آزمون‌ها را می‌بیند. ثبت و ویرایش آزمون‌ها با خود دانش‌آموزان است.</p>
+
+    <script>
+        const tg = window.Telegram && window.Telegram.WebApp;
+        if (tg) { tg.ready(); tg.expand(); }
+
+        // Development only: open as /advisor.html?dev=900000099
+        const devId = new URLSearchParams(location.search).get("dev");
+
+        const $ = sel => document.querySelector(sel);
+
+        function esc(value) {
+            return String(value ?? "").replace(/[&<>"']/g, c => (
+                { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+            ));
+        }
+
+        function fmt(value) {
+            return value == null || value === "" ? "—" : Number(value).toLocaleString("fa-IR");
+        }
+
+        function fmtDate(iso) {
+            try { return new Date(iso).toLocaleDateString("fa-IR"); } catch (_) { return ""; }
+        }
+
+        function authHeaders() {
+            if (tg && tg.initData) return { "X-Telegram-Init-Data": tg.initData };
+            if (devId) return { "X-Dev-Telegram-Id": devId };
+            return {};
+        }
+
+        async function api(path, options = {}) {
+            const headers = { ...authHeaders() };
+            if (options.body) headers["Content-Type"] = "application/json; charset=utf-8";
+            const res = await fetch("/api" + path, { ...options, headers });
+            let body = null;
+            try { body = await res.json(); } catch (_) { }
+            if (!res.ok) {
+                throw new Error(body && typeof body.detail === "string" ? body.detail : "ارتباط با سرور برقرار نشد.");
+            }
+            return body;
+        }
+
+        function notify(text, type = "ok") {
+            $("#notice").innerHTML = `<div class="notice n-${type}">${esc(text)}</div>`;
+        }
+
+        function chips(t) {
+            return `<div class="chips">
+    <span class="chip c-ok">صحیح ${fmt(t.correct)}</span>
+    <span class="chip c-bad">غلط ${fmt(t.wrong)}</span>
+    <span class="chip c-blank">نزده ${fmt(t.blank)}</span>
+  </div>`;
+        }
+
+        function bar(ok, bad, blank) {
+            const total = ok + bad + blank;
+            if (!total) return "";
+            const p = v => ((v / total) * 100).toFixed(2);
+            return `<div class="bar">
+    <span class="b-ok" style="width:${p(ok)}%"></span>
+    <span class="b-bad" style="width:${p(bad)}%"></span>
+    <span class="b-blank" style="width:${p(blank)}%"></span>
+  </div>`;
+        }
+
+        const STATUS_LABEL = { pending: "منتظر استفاده", used: "استفاده شده", expired: "منقضی شده" };
+        const STATUS_CLASS = { pending: "c-pending", used: "c-used", expired: "c-expired" };
+
+        // ---------- Views ----------
+
+        async function renderHome() {
+            $("#title").textContent = "پنل مشاور";
+            const [students, invites] = await Promise.all([api("/advisor/students"), api("/advisor/invites")]);
+            $("#sub").textContent = `${fmt(students.length)} دانش‌آموز متصل`;
+
+            const inviteRows = invites.length
+                ? invites.slice(0, 5).map(inv => `
+        <div class="invite-row">
+          <span>ساخته شده: ${esc(fmtDate(inv.created_at))}</span>
+          <span class="chip ${STATUS_CLASS[inv.status]}">${STATUS_LABEL[inv.status]}</span>
+        </div>`).join("")
+                : `<div class="meta">هنوز کدی ساخته نشده است.</div>`;
+
+            const studentRows = students.length
+                ? students.map(st => `
+        <a class="card row" href="#/s/${st.id}">
+          <div class="avatar">${esc((st.full_name || "؟").charAt(0))}</div>
+          <div class="grow">
+            <b>${esc(st.full_name)}</b>
+            <div class="meta">متصل از ${esc(fmtDate(st.linked_at))} · ${fmt(st.exam_count)} آزمون</div>
+          </div>
+          <span class="arrow">←</span>
+        </a>`).join("")
+                : `<div class="card empty">هنوز دانش‌آموزی به شما متصل نشده است. کد دعوت بسازید و برای دانش‌آموز بفرستید.</div>`;
+
+            $("#view").innerHTML = `
+    <div class="card">
+      <div class="card-title">کد دعوت دانش‌آموز <small>هر کد یک بار استفاده می‌شود</small></div>
+      <button class="btn" id="new-invite" type="button">ساخت کد جدید</button>
+      <div id="invite-result"></div>
+      <div style="margin-top:14px">${inviteRows}</div>
+    </div>
+
+    <div class="card-title" style="margin:18px 0 10px">دانش‌آموزان من</div>
+    ${studentRows}`;
+        }
+
+        async function renderStudent(id) {
+            const [students, exams] = await Promise.all([
+                api("/advisor/students"),
+                api(`/advisor/students/${id}/exams`),
+            ]);
+            const student = students.find(x => String(x.id) === String(id));
+            $("#title").textContent = student ? student.full_name : "دانش‌آموز";
+            $("#sub").textContent = `${fmt(exams.length)} آزمون ثبت شده`;
+
+            const back = `<a class="back" href="#/">→ دانش‌آموزان من</a>`;
+            if (!exams.length) {
+                $("#view").innerHTML = back + `<div class="card empty">این دانش‌آموز هنوز آزمونی ثبت نکرده است.</div>`;
+                return;
+            }
+
+            $("#view").innerHTML = back + [...exams].reverse().map(e => `
+    <a class="card row" href="#/e/${e.id}">
+      <div class="grow">
+        <b>${esc(e.name)}</b>
+        <div class="meta">${esc(e.held_on)} · تراز ${fmt(e.overall_traz)} · رتبه ${fmt(e.overall_rank)}</div>
+        ${chips(e.totals)}
+      </div>
+      <span class="arrow">←</span>
+    </a>`).join("");
+        }
+
+        async function renderExam(id) {
+            const e = await api(`/advisor/exams/${id}`);
+            $("#title").textContent = e.name;
+            $("#sub").textContent = e.held_on;
+
+            const back = `<a class="back" href="javascript:history.back()">→ بازگشت</a>`;
+
+            const summary = `
+    <div class="card">
+      <div class="card-title">نتیجه کلی <small>${esc(e.held_on)}</small></div>
+      <div class="stats">
+        <div class="stat"><div class="l">تراز کل</div><div class="v">${fmt(e.overall_traz)}</div></div>
+        <div class="stat"><div class="l">رتبه کل</div><div class="v">${fmt(e.overall_rank)}</div></div>
+        <div class="stat"><div class="l">رتبه منطقه</div><div class="v">${fmt(e.region_rank)}</div></div>
+      </div>
+      ${chips(e.totals)}
+      ${bar(e.totals.correct, e.totals.wrong, e.totals.blank)}
+    </div>`;
+
+            const subjects = e.subjects.map(s => `
+    <div class="card">
+      <div class="subj-head">
+        <span>${esc(s.subject_name)}</span>
+        <span class="chip c-rank">رتبه ${fmt(s.rank)}</span>
+      </div>
+      ${chips({ correct: s.correct, wrong: s.wrong, blank: s.blank })}
+      ${bar(s.correct, s.wrong, s.blank)}
+      ${s.reasons.length
+                    ? s.reasons.map(r => `
+            <div class="group-title">${esc(r.label)}</div>
+            <div class="refs">${r.items.map(item => `<span class="ref">${esc(item)}</span>`).join("")}</div>`).join("")
+                    : `<div class="meta" style="margin-top:10px">دلیلی ثبت نشده است.</div>`}
+    </div>`).join("");
+
+            const notes = e.notes.length
+                ? `<div class="card"><div class="card-title">جمع‌بندی</div>
+        ${e.notes.map(n => `<div class="note"><b>${esc(n.label)}</b>${esc(n.text)}</div>`).join("")}
+      </div>`
+                : "";
+
+            $("#view").innerHTML = back + summary + subjects + notes;
+        }
+
+        // ---------- Actions ----------
+
+        document.addEventListener("click", async e => {
+            if (e.target.closest("#new-invite")) {
+                const btn = e.target.closest("#new-invite");
+                btn.disabled = true;
+                try {
+                    const created = await api("/advisor/invites", { method: "POST" });
+                    $("#invite-result").innerHTML = `
+        <div class="code-box">
+          <span class="code-value">${esc(created.code)}</span>
+          <button class="btn ghost" type="button" id="copy-code" data-code="${esc(created.code)}">کپی کد</button>
+        </div>
+        <div class="warn-note">این کد فقط همین یک بار نمایش داده می‌شود. آن را برای دانش‌آموز بفرستید. اعتبار: تا ${esc(fmtDate(created.expires_at))}</div>`;
+                } catch (err) {
+                    notify(err.message, "err");
+                } finally {
+                    btn.disabled = false;
+                }
+            }
+
+            const copy = e.target.closest("#copy-code");
+            if (copy) {
+                try {
+                    await navigator.clipboard.writeText(copy.dataset.code);
+                    copy.textContent = "کپی شد";
+                } catch (_) {
+                    notify("کپی انجام نشد. کد را دستی انتخاب کنید.", "err");
+                }
+            }
+        });
+
+        // ---------- Router ----------
+
+        function route() {
+            const p = location.hash.replace(/^#\/?/, "").split("/").filter(Boolean);
+            if (p[0] === "s" && p[1]) return ["student", p[1]];
+            if (p[0] === "e" && p[1]) return ["exam", p[1]];
+            return ["home"];
+        }
+
+        async function render() {
+            const [name, id] = route();
+            $("#notice").innerHTML = "";
+            $("#view").innerHTML = `<div class="loader"><div class="spinner"></div></div>`;
+            window.scrollTo({ top: 0 });
+            try {
+                if (name === "student") await renderStudent(id);
+                else if (name === "exam") await renderExam(id);
+                else await renderHome();
+            } catch (err) {
+                $("#view").innerHTML = `<div class="error">${esc(err.message)}</div>`;
+            }
+        }
+
+        window.addEventListener("hashchange", render);
+        render();
+    </script>
+</body>
+
+</html>

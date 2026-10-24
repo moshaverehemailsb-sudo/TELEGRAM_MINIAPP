@@ -1,6 +1,6 @@
-"""Converts the advisor form payload (the same JSON index.html sends) into ORM objects.
+"""Converts the exam form payload (the JSON the form sends) into ORM objects.
 
-Every value is validated here. Persian labels from the form are mapped to internal codes.
+Used by the student entry form (create and edit) and to load an exam back into the form.
 """
 
 import re
@@ -11,8 +11,9 @@ from ..models import Exam, ExamNote, ExamSubjectResult, QuestionReason, Student,
 from ..reasons import REASONS
 
 SUBJECT_CODES = {"ریاضی": "math", "فیزیک": "physics", "شیمی": "chemistry"}
+SUBJECT_NAME_BY_CODE = {code: name for name, code in SUBJECT_CODES.items()}
 REASON_CODE_BY_LABEL = {info["label"]: code for code, info in REASONS.items()}
-# Same order as the three note boxes in index.html
+# Same order as the three note boxes in the form
 NOTE_LEVELS = ["from_scratch", "more_practice", "review"]
 
 # Persian (U+06F0..) and Arabic-Indic (U+0660..) digits -> ASCII digits
@@ -71,16 +72,19 @@ def build_exam(
     student: Student,
     payload: ExamFormIn,
     subjects_by_code: dict[str, Subject],
+    exam: Exam | None = None,
 ) -> Exam:
-    """Build (but do not save) an Exam from the form payload. Raises ValueError on bad input."""
-    exam = Exam(
-        student_id=student.id,
-        name=payload.examName.strip(),
-        held_on_text=parse_exam_date(payload.date),
-        overall_traz=parse_int(payload.overallTraz, "تراز کل", required=True),
-        overall_rank=parse_int(payload.overallRank, "رتبه کل", required=True),
-        region_rank=parse_int(payload.regionRank, "رتبه در منطقه"),
-    )
+    """Fill `exam` (or a new Exam) from the payload.
+
+    When updating, the caller must clear the old subject_results and notes first.
+    Raises ValueError on invalid input.
+    """
+    target = exam if exam is not None else Exam(student_id=student.id)
+    target.name = payload.examName.strip()
+    target.held_on_text = parse_exam_date(payload.date)
+    target.overall_traz = parse_int(payload.overallTraz, "تراز کل", required=True)
+    target.overall_rank = parse_int(payload.overallRank, "رتبه کل", required=True)
+    target.region_rank = parse_int(payload.regionRank, "رتبه در منطقه")
 
     seen_codes: set[str] = set()
     for item in payload.subjects:
@@ -107,11 +111,43 @@ def build_exam(
                 ref = ref.strip()
                 if ref:
                     result.reasons.append(QuestionReason(reason_code=reason_code, item_ref=ref[:200]))
-        exam.subject_results.append(result)
+        target.subject_results.append(result)
 
     for level, text in zip(NOTE_LEVELS, payload.notes):
         text = text.strip()
         if text:
-            exam.notes.append(ExamNote(level=level, text=text))
+            target.notes.append(ExamNote(level=level, text=text))
 
-    return exam
+    return target
+
+
+def export_exam_to_form(exam: Exam) -> dict:
+    """Return the same JSON shape the form sends, so an exam can be loaded for editing."""
+    subjects = []
+    for result in sorted(exam.subject_results, key=lambda r: r.subject.sort_order):
+        reasons: dict[str, list[str]] = {}
+        for reason in result.reasons:
+            label = REASONS[reason.reason_code]["label"]
+            reasons.setdefault(label, []).append(reason.item_ref)
+        subjects.append(
+            {
+                "name": SUBJECT_NAME_BY_CODE[result.subject.code],
+                "rank": "" if result.rank is None else str(result.rank),
+                "ok": result.correct_count,
+                "bad": result.wrong_count,
+                "blank": result.blank_count,
+                "reasons": reasons,
+            }
+        )
+
+    notes_by_level = {note.level: note.text for note in exam.notes}
+    return {
+        "id": exam.id,
+        "examName": exam.name,
+        "date": exam.held_on_text,
+        "overallTraz": "" if exam.overall_traz is None else str(exam.overall_traz),
+        "overallRank": "" if exam.overall_rank is None else str(exam.overall_rank),
+        "regionRank": "" if exam.region_rank is None else str(exam.region_rank),
+        "subjects": subjects,
+        "notes": [notes_by_level.get(level, "") for level in NOTE_LEVELS],
+    }

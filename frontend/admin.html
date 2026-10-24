@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>پنل مدیر</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f1f5f9;
+            --card: #fff;
+            --ink: #0f172a;
+            --muted: #64748b;
+            --line: #e2e8f0;
+            --soft: #f8fafc;
+            --brand: #4f46e5;
+            --brand2: #7c3aed;
+            --ok: #15803d;
+            --okbg: #dcfce7;
+            --bad: #b91c1c;
+            --badbg: #fee2e2;
+            --blank: #334155;
+            --blankbg: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--ink);
+            font-family: 'Vazirmatn', Tahoma, sans-serif;
+            padding-bottom: 40px;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, var(--brand), var(--brand2));
+            color: #fff;
+            padding: calc(20px + env(safe-area-inset-top, 0px)) 18px 56px;
+            border-radius: 0 0 28px 28px;
+        }
+
+        .hero h1 {
+            margin: 0;
+            font-size: 19px;
+            font-weight: 800;
+        }
+
+        .hero p {
+            margin: 4px 0 0;
+            font-size: 13px;
+            opacity: .9;
+        }
+
+        .wrap {
+            max-width: 760px;
+            margin: -38px auto 0;
+            padding: 0 14px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 6px;
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 6px;
+            margin-bottom: 14px;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, .06);
+        }
+
+        .tabs a {
+            flex: 1;
+            text-align: center;
+            text-decoration: none;
+            color: var(--muted);
+            font-size: 14px;
+            font-weight: 700;
+            padding: 10px 6px;
+            border-radius: 12px;
+        }
+
+        .tabs a.active {
+            color: var(--brand);
+            background: #eef2ff;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 14px rgba(15, 23, 42, .05);
+        }
+
+        .card-title {
+            font-size: 15px;
+            font-weight: 800;
+            margin: 0 0 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-title small {
+            font-size: 12px;
+            color: var(--muted);
+            font-weight: 500;
+        }
+
+        .section-title {
+            font-size: 15px;
+            font-weight: 800;
+            margin: 18px 4px 10px;
+        }
+
+        .row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .grow {
+            flex: 1;
+            min-width: 0;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .meta {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 3px;
+            line-height: 1.7;
+        }
+
+        .arrow {
+            color: var(--muted);
+            font-size: 20px;
+            flex: none;
+        }
+
+        .avatar {
+            flex: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            background: #eef2ff;
+            color: var(--brand);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+        }
+
+        .chip {
+            display: inline-block;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 999px;
+        }
+
+        .c-on {
+            background: var(--okbg);
+            color: var(--ok);
+        }
+
+        .c-off {
+            background: var(--blankbg);
+            color: var(--blank);
+        }
+
+        .c-count {
+            background: #eef2ff;
+            color: #3730a3;
+        }
+
+        .latest {
+            background: var(--soft);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 10px 12px;
+            margin-top: 10px;
+            font-size: 13px;
+            line-height: 1.9;
+        }
+
+        .latest b {
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        @media (max-width: 560px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .field label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        input {
+            font-family: inherit;
+            font-size: 16px;
+            color: var(--ink);
+            width: 100%;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            background: var(--soft);
+            padding: 10px 12px;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: var(--brand);
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, .12);
+        }
+
+        .btn {
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 700;
+            padding: 10px 16px;
+            border-radius: 12px;
+            border: 1px solid #cbd5e1;
+            background: #fff;
+            color: var(--ink);
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .btn.primary {
+            background: linear-gradient(135deg, var(--brand), var(--brand2));
+            color: #fff;
+            border-color: transparent;
+            box-shadow: 0 8px 18px rgba(79, 70, 229, .25);
+        }
+
+        .btn.danger {
+            color: var(--bad);
+            border-color: #fecaca;
+        }
+
+        .btn.ok {
+            color: var(--ok);
+            border-color: #bbf7d0;
+        }
+
+        .btn.small {
+            padding: 7px 12px;
+            font-size: 13px;
+        }
+
+        .btn[disabled] {
+            opacity: .5;
+            cursor: not-allowed;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .back {
+            display: inline-block;
+            color: var(--brand);
+            font-weight: 700;
+            font-size: 14px;
+            text-decoration: none;
+            margin: 4px 2px 12px;
+        }
+
+        .privacy {
+            background: #eef2ff;
+            color: #3730a3;
+            border-radius: 12px;
+            padding: 10px 12px;
+            font-size: 12px;
+            line-height: 1.8;
+            margin-bottom: 12px;
+        }
+
+        .notice {
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin-bottom: 12px;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .n-ok {
+            background: var(--okbg);
+            color: var(--ok);
+        }
+
+        .n-err {
+            background: var(--badbg);
+            color: var(--bad);
+        }
+
+        .empty {
+            text-align: center;
+            color: var(--muted);
+            padding: 24px 10px;
+            font-size: 14px;
+            line-height: 1.9;
+        }
+
+        .error {
+            background: var(--badbg);
+            color: var(--bad);
+            border-radius: 14px;
+            padding: 14px;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .loader {
+            display: flex;
+            justify-content: center;
+            padding: 40px 0;
+        }
+
+        .spinner {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 3px solid var(--line);
+            border-top-color: var(--brand);
+            animation: spin .8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .modal-bg {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, .45);
+            z-index: 20;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-bg.open {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--card);
+            border-radius: 18px;
+            padding: 20px;
+            width: 100%;
+            max-width: 360px;
+        }
+
+        .modal h3 {
+            margin: 0 0 8px;
+            font-size: 16px;
+        }
+
+        .modal p {
+            margin: 0 0 16px;
+            font-size: 14px;
+            line-height: 1.9;
+            color: #334155;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="hero">
+        <h1 id="title">پنل مدیر</h1>
+        <p id="sub">در حال اتصال...</p>
+    </header>
+
+    <main class="wrap">
+        <nav class="tabs">
+            <a href="#/" data-nav="advisors">مشاوران</a>
+            <a href="#/unassigned" data-nav="unassigned">بدون مشاور</a>
+        </nav>
+        <div id="notice"></div>
+        <div id="view">
+            <div class="loader">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </main>
+
+    <div class="modal-bg" id="modal">
+        <div class="modal" role="dialog" aria-modal="true">
+            <h3 id="modal-title"></h3>
+            <p id="modal-text"></p>
+            <div class="actions">
+                <button class="btn" type="button" id="modal-cancel">انصراف</button>
+                <button class="btn primary" type="button" id="modal-ok">تأیید</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram && window.Telegram.WebApp;
+        if (tg) { tg.ready(); tg.expand(); }
+
+        // Development only: open as /admin.html?dev=900000098
+        const devId = new URLSearchParams(location.search).get("dev");
+
+        const $ = sel => document.querySelector(sel);
+
+        function esc(value) {
+            return String(value ?? "").replace(/[&<>"']/g, c => (
+                { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+            ));
+        }
+
+        function fmt(value) {
+            return value == null || value === "" ? "—" : Number(value).toLocaleString("fa-IR");
+        }
+
+        function fmtDate(iso) {
+            if (!iso) return "";
+            try { return new Date(iso).toLocaleDateString("fa-IR"); } catch (_) { return ""; }
+        }
+
+        function normDigits(s) {
+            return String(s ?? "")
+                .replace(/[\u06F0-\u06F9]/g, d => d.charCodeAt(0) - 0x06F0)
+                .replace(/[\u0660-\u0669]/g, d => d.charCodeAt(0) - 0x0660)
+                .trim();
+        }
+
+        function authHeaders() {
+            if (tg && tg.initData) return { "X-Telegram-Init-Data": tg.initData };
+            if (devId) return { "X-Dev-Telegram-Id": devId };
+            return {};
+        }
+
+        async function api(path, options = {}) {
+            const headers = { ...authHeaders() };
+            if (options.body) headers["Content-Type"] = "application/json; charset=utf-8";
+            const res = await fetch("/api" + path, { ...options, headers });
+            let body = null;
+            try { body = await res.json(); } catch (_) { }
+            if (!res.ok) {
+                throw new Error(body && typeof body.detail === "string" ? body.detail : "ارتباط با سرور برقرار نشد.");
+            }
+            return body;
+        }
+
+        function notify(text, type = "ok") {
+            $("#notice").innerHTML = `<div class="notice n-${type}">${esc(text)}</div>`;
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        function confirmDialog(title, text) {
+            return new Promise(resolve => {
+                $("#modal-title").textContent = title;
+                $("#modal-text").textContent = text;
+                $("#modal").classList.add("open");
+                const done = result => {
+                    $("#modal").classList.remove("open");
+                    $("#modal-ok").onclick = null;
+                    $("#modal-cancel").onclick = null;
+                    resolve(result);
+                };
+                $("#modal-ok").onclick = () => done(true);
+                $("#modal-cancel").onclick = () => done(false);
+            });
+        }
+
+        const loaderHtml = `<div class="loader"><div class="spinner"></div></div>`;
+
+        // ---------- Shared pieces ----------
+
+        function studentCard(st, showLinkedAt) {
+            const latest = st.latest_exam
+                ? `<div class="latest">
+         <b>آخرین آزمون</b><br>
+         ${esc(st.latest_exam.name)} · ${esc(st.latest_exam.held_on)}<br>
+         تراز ${fmt(st.latest_exam.overall_traz)} · رتبه کل ${fmt(st.latest_exam.overall_rank)}
+       </div>`
+                : `<div class="meta" style="margin-top:8px">هنوز آزمونی ثبت نشده است.</div>`;
+
+            return `
+    <div class="card">
+      <div class="row">
+        <div class="avatar">${esc((st.full_name || "؟").charAt(0))}</div>
+        <div class="grow">
+          <b>${esc(st.full_name)}</b>
+          <div class="meta">
+            شناسه تلگرام ${esc(st.telegram_user_id)} · ${fmt(st.exam_count)} آزمون
+            ${showLinkedAt && st.linked_at ? ` · متصل از ${esc(fmtDate(st.linked_at))}` : ""}
+          </div>
+        </div>
+      </div>
+      ${latest}
+    </div>`;
+        }
+
+        // ---------- Views ----------
+
+        function advisorRow(a) {
+            const isActive = a.is_active;
+            return `
+    <div class="card row">
+      <a class="grow" href="#/a/${a.id}">
+        <b>${esc(a.full_name)}</b>
+        <div class="meta">
+          شناسه تلگرام ${esc(a.telegram_user_id)} · <span class="chip c-count">${fmt(a.student_count)} دانش‌آموز</span>
+          <span class="chip ${isActive ? "c-on" : "c-off"}">${isActive ? "فعال" : "غیرفعال"}</span>
+        </div>
+      </a>
+      <button class="btn small ${isActive ? "danger" : "ok"}" type="button"
+              data-toggle="${a.id}" data-active="${isActive}" data-name="${esc(a.full_name)}">
+        ${isActive ? "غیرفعال کردن" : "فعال کردن"}
+      </button>
+    </div>`;
+        }
+
+        async function renderAdvisors() {
+            const advisors = await api("/admin/advisors");
+            $("#title").textContent = "پنل مدیر";
+            $("#sub").textContent = `${fmt(advisors.length)} مشاور ثبت شده`;
+
+            $("#view").innerHTML = `
+    <div class="card">
+      <div class="card-title">افزودن مشاور جدید</div>
+      <div class="form-grid">
+        <div class="field">
+          <label for="adv-name">نام و نام خانوادگی</label>
+          <input id="adv-name" maxlength="120">
+        </div>
+        <div class="field">
+          <label for="adv-tg">شناسه عددی تلگرام</label>
+          <input id="adv-tg" inputmode="numeric">
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn primary" type="button" id="add-advisor">ثبت مشاور</button>
+      </div>
+    </div>
+
+    <div class="section-title">فهرست مشاوران</div>
+    ${advisors.length
+                    ? advisors.map(advisorRow).join("")
+                    : `<div class="card empty">هنوز مشاوری ثبت نشده است.</div>`}`;
+        }
+
+        async function renderAdvisor(id) {
+            const [advisors, students] = await Promise.all([
+                api("/admin/advisors"),
+                api(`/admin/advisors/${encodeURIComponent(id)}/students`),
+            ]);
+            const advisor = advisors.find(a => String(a.id) === String(id));
+            if (!advisor) throw new Error("مشاور یافت نشد.");
+
+            $("#title").textContent = advisor.full_name;
+            $("#sub").textContent = `${fmt(students.length)} دانش‌آموز متصل`;
+
+            $("#view").innerHTML = `
+    <a class="back" href="#/">→ همه مشاوران</a>
+
+    <div class="privacy">
+      مدیر فقط اطلاعات اصلی دانش‌آموزان را می‌بیند. جزئیات درس‌ها، دلایل و یادداشت‌ها فقط برای مشاور قابل مشاهده است.
+    </div>
+
+    <div class="card row">
+      <div class="grow">
+        <b>${esc(advisor.full_name)}</b>
+        <div class="meta">
+          شناسه تلگرام ${esc(advisor.telegram_user_id)} ·
+          <span class="chip ${advisor.is_active ? "c-on" : "c-off"}">${advisor.is_active ? "فعال" : "غیرفعال"}</span>
+        </div>
+      </div>
+      <button class="btn small ${advisor.is_active ? "danger" : "ok"}" type="button"
+              data-toggle="${advisor.id}" data-active="${advisor.is_active}" data-name="${esc(advisor.full_name)}">
+        ${advisor.is_active ? "غیرفعال کردن" : "فعال کردن"}
+      </button>
+    </div>
+
+    <div class="section-title">دانش‌آموزان متصل</div>
+    ${students.length
+                    ? students.map(st => studentCard(st, true)).join("")
+                    : `<div class="card empty">این مشاور هنوز دانش‌آموزی ندارد.</div>`}`;
+        }
+
+        async function renderUnassigned() {
+            const students = await api("/admin/unassigned-students");
+            $("#title").textContent = "پنل مدیر";
+            $("#sub").textContent = `${fmt(students.length)} دانش‌آموز بدون مشاور`;
+
+            $("#view").innerHTML = `
+    <div class="privacy">
+      این دانش‌آموزان به هیچ مشاور فعالی متصل نیستند. اتصال را خود دانش‌آموز با کد دعوت انجام می‌دهد.
+    </div>
+    ${students.length
+                    ? students.map(st => studentCard(st, false)).join("")
+                    : `<div class="card empty">همه دانش‌آموزان به مشاور متصل هستند.</div>`}`;
+        }
+
+        // ---------- Actions ----------
+
+        document.addEventListener("click", async e => {
+            // Add advisor
+            if (e.target.closest("#add-advisor")) {
+                const name = $("#adv-name").value.trim();
+                const tgId = normDigits($("#adv-tg").value);
+                if (name.length < 2 || !/^\d+$/.test(tgId)) {
+                    notify("نام و شناسه عددی تلگرام را درست وارد کنید.", "err");
+                    return;
+                }
+                try {
+                    const created = await api("/admin/advisors", {
+                        method: "POST",
+                        body: JSON.stringify({ telegram_user_id: Number(tgId), full_name: name }),
+                    });
+                    notify(`مشاور «${created.full_name}» ثبت شد.`, "ok");
+                    await render();
+                } catch (err) {
+                    notify(err.message, "err");
+                }
+                return;
+            }
+
+            // Activate / deactivate advisor
+            const toggle = e.target.closest("[data-toggle]");
+            if (toggle) {
+                const isActive = toggle.dataset.active === "true";
+                const id = toggle.dataset.toggle;
+                if (isActive) {
+                    const ok = await confirmDialog(
+                        "غیرفعال کردن مشاور",
+                        `با غیرفعال کردن «${toggle.dataset.name}»، اتصال همه دانش‌آموزان او قطع می‌شود تا بتوانند مشاور دیگری را انتخاب کنند. ادامه می‌دهید؟`
+                    );
+                    if (!ok) return;
+                }
+                try {
+                    await api(`/admin/advisors/${encodeURIComponent(id)}`, {
+                        method: "PATCH",
+                        body: JSON.stringify({ is_active: !isActive }),
+                    });
+                    notify(isActive ? "مشاور غیرفعال شد." : "مشاور فعال شد.", "ok");
+                    await render();
+                } catch (err) {
+                    notify(err.message, "err");
+                }
+            }
+        });
+
+        // ---------- Router ----------
+
+        function currentRoute() {
+            const p = location.hash.replace(/^#\/?/, "").split("/").filter(Boolean);
+            if (p[0] === "a" && p[1]) return { name: "advisor", id: p[1] };
+            if (p[0] === "unassigned") return { name: "unassigned" };
+            return { name: "advisors" };
+        }
+
+        async function render() {
+            const route = currentRoute();
+            const navKey = route.name === "advisor" ? "advisors" : route.name;
+            document.querySelectorAll(".tabs a").forEach(a => {
+                a.classList.toggle("active", a.dataset.nav === navKey);
+            });
+
+            $("#notice").innerHTML = "";
+            $("#view").innerHTML = loaderHtml;
+            window.scrollTo({ top: 0 });
+
+            try {
+                if (route.name === "advisor") await renderAdvisor(route.id);
+                else if (route.name === "unassigned") await renderUnassigned();
+                else await renderAdvisors();
+            } catch (err) {
+                $("#title").textContent = "پنل مدیر";
+                $("#sub").textContent = "";
+                $("#view").innerHTML = `<div class="error">${esc(err.message)}</div>`;
+            }
+        }
+
+        window.addEventListener("hashchange", render);
+        render();
+    </script>
+</body>
+
+</html>

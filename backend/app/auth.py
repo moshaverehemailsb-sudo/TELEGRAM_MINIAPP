@@ -1,8 +1,11 @@
-﻿"""Telegram Mini App authentication.
+﻿"""Telegram Mini App authentication and role resolution.
 
-The frontend sends the raw `initData` string in the X-Telegram-Init-Data header.
-The server verifies its HMAC signature with the bot token. The numeric user id
-inside the signed data is the only identity used for authorization.
+Roles are resolved on the server for every request:
+- admin:   telegram id listed in ADMIN_TELEGRAM_IDS (.env)
+- advisor: an active row in the advisors table
+- student: a row in the students table
+
+One user can hold more than one role. Each endpoint checks only the role it needs.
 """
 
 import hashlib
@@ -18,13 +21,23 @@ from sqlalchemy.orm import Session
 
 from .config import get_settings
 from .database import get_db
-from .models import Student
+from .models import Advisor, Student
 
 
 @dataclass(frozen=True)
 class Identity:
     telegram_user_id: int
-    is_advisor: bool
+    is_admin: bool
+    advisor_id: int | None
+    student_id: int | None
+
+    @property
+    def is_advisor(self) -> bool:
+        return self.advisor_id is not None
+
+    @property
+    def is_student(self) -> bool:
+        return self.student_id is not None
 
 
 def _unauthorized(detail: str = "احراز هویت انجام نشد. لطفا از داخل تلگرام وارد شوید.") -> HTTPException:
@@ -61,6 +74,7 @@ def verify_init_data(init_data: str, bot_token: str, max_age: int) -> int:
 def get_identity(
     x_telegram_init_data: str | None = Header(default=None),
     x_dev_telegram_id: str | None = Header(default=None),
+    db: Session = Depends(get_db),
 ) -> Identity:
     settings = get_settings()
 
@@ -78,17 +92,47 @@ def get_identity(
     else:
         raise _unauthorized()
 
-    return Identity(telegram_user_id=user_id, is_advisor=user_id in settings.advisor_ids)
+    advisor_id = db.scalar(
+        select(Advisor.id).where(
+            Advisor.telegram_user_id == user_id,
+            Advisor.is_active.is_(True),
+        )
+    )
+    student_id = db.scalar(select(Student.id).where(Student.telegram_user_id == user_id))
+
+    return Identity(
+        telegram_user_id=user_id,
+        is_admin=user_id in settings.admin_ids,
+        advisor_id=advisor_id,
+        student_id=student_id,
+    )
+
+
+def require_admin(identity: Identity = Depends(get_identity)) -> Identity:
+    if not identity.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="فقط مدیر سیستم به این بخش دسترسی دارد.",
+        )
+    return identity
+
+
+def require_advisor(identity: Identity = Depends(get_identity)) -> Identity:
+    if not identity.is_advisor:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="فقط مشاوران به این بخش دسترسی دارند.",
+        )
+    return identity
 
 
 def get_current_student(
     identity: Identity = Depends(get_identity),
     db: Session = Depends(get_db),
 ) -> Student:
-    student = db.scalar(select(Student).where(Student.telegram_user_id == identity.telegram_user_id))
-    if student is None:
+    if identity.student_id is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="برای این حساب تلگرام پرونده‌ای ثبت نشده است.",
         )
-    return student
+    return db.get(Student, identity.student_id)

@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>ثبت آزمون</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f1f5f9;
+            --card: #fff;
+            --ink: #0f172a;
+            --muted: #64748b;
+            --line: #e2e8f0;
+            --soft: #f8fafc;
+            --brand: #4f46e5;
+            --brand2: #7c3aed;
+            --okbg: #dcfce7;
+            --ok: #15803d;
+            --badbg: #fee2e2;
+            --bad: #b91c1c;
+            --blankbg: #e2e8f0;
+            --blank: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--ink);
+            font-family: 'Vazirmatn', Tahoma, sans-serif;
+            padding-bottom: 40px;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, var(--brand), var(--brand2));
+            color: #fff;
+            padding: calc(20px + env(safe-area-inset-top, 0px)) 18px 50px;
+            border-radius: 0 0 28px 28px;
+        }
+
+        .hero-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .hero h1 {
+            margin: 0;
+            font-size: 19px;
+            font-weight: 800;
+        }
+
+        .hero p {
+            margin: 4px 0 0;
+            font-size: 13px;
+            opacity: .9;
+        }
+
+        .hero a {
+            color: #fff;
+            font-size: 13px;
+            text-decoration: none;
+            background: rgba(255, 255, 255, .2);
+            padding: 6px 12px;
+            border-radius: 999px;
+            white-space: nowrap;
+        }
+
+        .wrap {
+            max-width: 880px;
+            margin: -32px auto 0;
+            padding: 0 14px;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 16px;
+            margin-bottom: 14px;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, .06);
+        }
+
+        .card h2 {
+            font-size: 15px;
+            margin: 0 0 12px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+
+        .grid4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .grid4 {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .field label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        .hint {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .req {
+            color: #dc2626;
+        }
+
+        input,
+        textarea {
+            font-family: inherit;
+            font-size: 16px;
+            color: var(--ink);
+            width: 100%;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            background: var(--soft);
+            padding: 10px 12px;
+            outline: none;
+            transition: border-color .2s, box-shadow .2s, background .2s;
+        }
+
+        input:focus,
+        textarea:focus {
+            border-color: var(--brand);
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, .12);
+        }
+
+        textarea {
+            min-height: 70px;
+            resize: vertical;
+            line-height: 1.8;
+        }
+
+        .subject {
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            margin-bottom: 14px;
+            overflow: hidden;
+        }
+
+        .subject-head {
+            background: linear-gradient(90deg, #f8fafc, #eef2ff);
+            padding: 12px 14px;
+            font-weight: 700;
+            font-size: 15px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .subject-body {
+            padding: 14px;
+        }
+
+        .groups {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin-top: 14px;
+        }
+
+        @media (max-width: 700px) {
+            .groups {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .gtitle {
+            display: inline-block;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 999px;
+            margin-bottom: 8px;
+        }
+
+        .g-ok {
+            background: var(--okbg);
+            color: var(--ok);
+        }
+
+        .g-bad {
+            background: var(--badbg);
+            color: var(--bad);
+        }
+
+        .g-blank {
+            background: var(--blankbg);
+            color: var(--blank);
+        }
+
+        .reason-in {
+            margin-bottom: 8px;
+        }
+
+        .reason-in label {
+            display: block;
+            font-size: 12px;
+            color: var(--muted);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .reason-in input {
+            font-size: 14px;
+            padding: 8px 10px;
+        }
+
+        .btn {
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 700;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--brand), var(--brand2));
+            color: #fff;
+            cursor: pointer;
+            box-shadow: 0 8px 18px rgba(79, 70, 229, .25);
+        }
+
+        .btn.ghost {
+            background: #fff;
+            color: var(--ink);
+            border: 1px solid #cbd5e1;
+            box-shadow: none;
+        }
+
+        .btn.danger {
+            background: #fff;
+            color: var(--bad);
+            border: 1px solid #fecaca;
+            box-shadow: none;
+        }
+
+        .btn[disabled] {
+            opacity: .5;
+            cursor: not-allowed;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+
+        .edit-banner {
+            display: none;
+            background: #fef3c7;
+            color: #92400e;
+            border-radius: 12px;
+            padding: 10px 14px;
+            margin-bottom: 12px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .notice {
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin-bottom: 14px;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .n-ok {
+            background: var(--okbg);
+            color: var(--ok);
+        }
+
+        .n-err {
+            background: var(--badbg);
+            color: var(--bad);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="hero">
+        <div class="hero-top">
+            <div>
+                <h1 id="title">ثبت آزمون</h1>
+                <p id="sub">در حال اتصال...</p>
+            </div>
+            <a id="back-link" href="index.html">بازگشت</a>
+        </div>
+    </header>
+
+    <main class="wrap">
+        <div id="notice"></div>
+
+        <!-- Registration (shown once, if the student is not registered yet) -->
+        <section class="card hidden" id="register-card">
+            <h2>ثبت‌نام</h2>
+            <p class="hint" style="margin:0 0 12px">برای ثبت آزمون، ابتدا نام و نام خانوادگی خود را وارد کنید.</p>
+            <div class="field" style="max-width:420px">
+                <label for="reg-name">نام و نام خانوادگی <span class="req">*</span></label>
+                <input id="reg-name" maxlength="120">
+            </div>
+            <div class="actions">
+                <button class="btn" type="button" id="reg-btn">ثبت‌نام</button>
+            </div>
+        </section>
+
+        <form id="exam-form" class="card hidden" novalidate>
+            <h2 id="form-title">ثبت آزمون جدید</h2>
+            <div class="edit-banner" id="edit-banner">در حال ویرایش آزمون. بعد از ذخیره، نتیجه جدید نمایش داده می‌شود.
+            </div>
+
+            <div class="grid">
+                <div class="field">
+                    <label for="exam-name">نام آزمون <span class="req">*</span></label>
+                    <input id="exam-name" maxlength="120" placeholder="مثلا: آزمون آزمایشی ۴">
+                </div>
+                <div class="field">
+                    <label for="exam-date">تاریخ آزمون <span class="req">*</span></label>
+                    <input id="exam-date" placeholder="1405/01/10">
+                </div>
+                <div class="field">
+                    <label for="overall-traz">تراز کل <span class="req">*</span></label>
+                    <input id="overall-traz" inputmode="numeric">
+                </div>
+                <div class="field">
+                    <label for="overall-rank">رتبه کل <span class="req">*</span></label>
+                    <input id="overall-rank" inputmode="numeric">
+                </div>
+                <div class="field">
+                    <label for="region-rank">رتبه در منطقه</label>
+                    <input id="region-rank" inputmode="numeric">
+                </div>
+            </div>
+
+            <h2 style="margin-top:22px">درس‌ها</h2>
+            <div id="subjects"></div>
+
+            <h2>جمع‌بندی و راهکارها</h2>
+            <div class="grid">
+                <div class="field"><label for="note-0">نیازمند مطالعه از صفر</label><textarea id="note-0"></textarea>
+                </div>
+                <div class="field"><label for="note-1">نیازمند تست بیشتر</label><textarea id="note-1"></textarea></div>
+                <div class="field"><label for="note-2">نیازمند مرور</label><textarea id="note-2"></textarea></div>
+            </div>
+
+            <div class="actions">
+                <button class="btn" type="submit" id="submit-btn">ثبت آزمون</button>
+                <button class="btn danger hidden" type="button" id="delete-btn">حذف آزمون</button>
+            </div>
+        </form>
+    </main>
+
+    <script>
+        const tg = window.Telegram && window.Telegram.WebApp;
+        if (tg) { tg.ready(); tg.expand(); }
+
+        // Development only: open as /exam-form.html?dev=900000060
+        const params = new URLSearchParams(location.search);
+        const devId = params.get("dev");
+        const editId = params.get("id");
+
+        const $ = id => document.getElementById(id);
+
+        const SUBJECTS = ["ریاضی", "فیزیک", "شیمی"];
+        const REASON_GROUPS = [
+            { title: "سوالات صحیح", cls: "g-ok", labels: ["شانسی", "راه حل طولانی"] },
+            { title: "سوالات غلط", cls: "g-bad", labels: ["بی‌دقتی", "مشکل علمی"] },
+            { title: "سوالات نزده", cls: "g-blank", labels: ["نرسیدن به بودجه‌بندی", "کم آوردن زمان", "نتوانستم حل کنم"] },
+        ];
+
+        function esc(value) {
+            return String(value ?? "").replace(/[&<>"']/g, c => (
+                { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+            ));
+        }
+
+        function normDigits(s) {
+            return String(s ?? "")
+                .replace(/[\u06F0-\u06F9]/g, d => d.charCodeAt(0) - 0x06F0)
+                .replace(/[\u0660-\u0669]/g, d => d.charCodeAt(0) - 0x0660)
+                .trim();
+        }
+
+        function toInt(raw, label) {
+            const text = normDigits(raw).replace(/[,،]/g, "");
+            if (text === "") return 0;
+            if (!/^\d+$/.test(text)) throw new Error(`${label} باید فقط عدد باشد.`);
+            return parseInt(text, 10);
+        }
+
+        function getShamsiDate() {
+            try {
+                const parts = new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
+                    year: "numeric", month: "2-digit", day: "2-digit",
+                }).formatToParts(new Date());
+                const get = t => (parts.find(p => p.type === t) || {}).value || "";
+                return [get("year"), get("month"), get("day")].map(normDigits).join("/");
+            } catch (_) {
+                return "";
+            }
+        }
+
+        function authHeaders() {
+            if (tg && tg.initData) return { "X-Telegram-Init-Data": tg.initData };
+            if (devId) return { "X-Dev-Telegram-Id": devId };
+            return {};
+        }
+
+        function errorText(body, status) {
+            const detail = body && body.detail;
+            if (typeof detail === "string") return detail;
+            if (Array.isArray(detail)) return "داده‌های ارسالی معتبر نیست. فیلدها را بررسی کنید.";
+            return `خطا در ارتباط با سرور (کد ${status})`;
+        }
+
+        async function api(path, options = {}) {
+            const headers = { ...authHeaders() };
+            if (options.body) headers["Content-Type"] = "application/json; charset=utf-8";
+            const res = await fetch("/api" + path, { ...options, headers });
+            let body = null;
+            try { body = await res.json(); } catch (_) { }
+            if (!res.ok) {
+                const err = new Error(errorText(body, res.status));
+                err.status = res.status;
+                throw err;
+            }
+            return body;
+        }
+
+        function notify(text, type = "ok") {
+            $("notice").innerHTML = `<div class="notice n-${type}">${esc(text)}</div>`;
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        function renderSubjects() {
+            $("subjects").innerHTML = SUBJECTS.map(name => `
+    <div class="subject" data-name="${esc(name)}">
+      <div class="subject-head">${esc(name)}</div>
+      <div class="subject-body">
+        <div class="grid4">
+          <div class="field"><label>رتبه درس</label><input class="rank" inputmode="numeric"></div>
+          <div class="field"><label>تعداد صحیح</label><input class="ok" inputmode="numeric" placeholder="0"></div>
+          <div class="field"><label>تعداد غلط</label><input class="bad" inputmode="numeric" placeholder="0"></div>
+          <div class="field"><label>تعداد نزده</label><input class="blank" inputmode="numeric" placeholder="0"></div>
+        </div>
+        <div class="groups">
+          ${REASON_GROUPS.map(g => `
+            <div>
+              <span class="gtitle ${g.cls}">${g.title}</span>
+              ${g.labels.map(label => `
+                <div class="reason-in">
+                  <label>${label}</label>
+                  <input class="reason" data-label="${label}" placeholder="مثلا: ۳، ۷، ۱۲">
+                </div>`).join("")}
+            </div>`).join("")}
+        </div>
+      </div>
+    </div>`).join("");
+        }
+
+        function fillForm(data) {
+            $("exam-name").value = data.examName;
+            $("exam-date").value = data.date;
+            $("overall-traz").value = data.overallTraz;
+            $("overall-rank").value = data.overallRank;
+            $("region-rank").value = data.regionRank;
+
+            data.subjects.forEach(s => {
+                const block = document.querySelector(`.subject[data-name="${s.name}"]`);
+                if (!block) return;
+                block.querySelector(".rank").value = s.rank;
+                block.querySelector(".ok").value = s.ok;
+                block.querySelector(".bad").value = s.bad;
+                block.querySelector(".blank").value = s.blank;
+                block.querySelectorAll(".reason").forEach(input => {
+                    input.value = (s.reasons[input.dataset.label] || []).join("، ");
+                });
+            });
+
+            data.notes.forEach((text, i) => { $("note-" + i).value = text; });
+        }
+
+        function resetForm() {
+            document.querySelectorAll("#exam-form input, #exam-form textarea").forEach(el => { el.value = ""; });
+            $("exam-date").value = getShamsiDate();
+        }
+
+        function buildPayload() {
+            try {
+                const required = {
+                    "نام آزمون": $("exam-name").value.trim(),
+                    "تاریخ آزمون": $("exam-date").value.trim(),
+                    "تراز کل": $("overall-traz").value.trim(),
+                    "رتبه کل": $("overall-rank").value.trim(),
+                };
+                for (const [label, value] of Object.entries(required)) {
+                    if (!value) throw new Error(`${label} الزامی است.`);
+                }
+
+                const subjects = [...document.querySelectorAll(".subject")].map(block => {
+                    const name = block.dataset.name;
+                    const reasons = {};
+                    block.querySelectorAll(".reason").forEach(input => {
+                        const items = input.value.split(/[,،]/).map(x => x.trim()).filter(Boolean);
+                        if (items.length) reasons[input.dataset.label] = items;
+                    });
+                    return {
+                        name,
+                        rank: block.querySelector(".rank").value.trim(),
+                        ok: toInt(block.querySelector(".ok").value, `تعداد صحیح ${name}`),
+                        bad: toInt(block.querySelector(".bad").value, `تعداد غلط ${name}`),
+                        blank: toInt(block.querySelector(".blank").value, `تعداد نزده ${name}`),
+                        reasons,
+                    };
+                });
+
+                return {
+                    examName: $("exam-name").value.trim(),
+                    date: $("exam-date").value.trim(),
+                    overallTraz: $("overall-traz").value.trim(),
+                    overallRank: $("overall-rank").value.trim(),
+                    regionRank: $("region-rank").value.trim(),
+                    subjects,
+                    notes: [0, 1, 2].map(i => $("note-" + i).value.trim()),
+                };
+            } catch (err) {
+                notify(err.message, "err");
+                return null;
+            }
+        }
+
+        function showForm(fullName) {
+            $("register-card").classList.add("hidden");
+            $("exam-form").classList.remove("hidden");
+            $("sub").textContent = fullName;
+        }
+
+        async function loadForEdit() {
+            const data = await api(`/exams/${encodeURIComponent(editId)}/form`);
+            fillForm(data);
+            $("title").textContent = "ویرایش آزمون";
+            $("form-title").textContent = "ویرایش آزمون";
+            $("edit-banner").style.display = "block";
+            $("submit-btn").textContent = "ذخیره تغییرات";
+            $("delete-btn").classList.remove("hidden");
+        }
+
+        // ---------- Events ----------
+
+        $("reg-btn").addEventListener("click", async () => {
+            const name = $("reg-name").value.trim();
+            if (name.length < 2) {
+                notify("نام و نام خانوادگی را وارد کنید.", "err");
+                return;
+            }
+            try {
+                await api("/me/register", { method: "POST", body: JSON.stringify({ full_name: name }) });
+                location.reload();
+            } catch (err) {
+                notify(err.message, "err");
+            }
+        });
+
+        $("exam-form").addEventListener("submit", async e => {
+            e.preventDefault();
+            const payload = buildPayload();
+            if (!payload) return;
+
+            const btn = $("submit-btn");
+            btn.disabled = true;
+            try {
+                if (editId) {
+                    const saved = await api(`/exams/${encodeURIComponent(editId)}`, {
+                        method: "PUT",
+                        body: JSON.stringify(payload),
+                    });
+                    notify(`آزمون «${saved.name}» ذخیره شد.`, "ok");
+                    setTimeout(() => { location.href = `index.html${location.search}#/exams/${editId}`; }, 900);
+                } else {
+                    const saved = await api("/exams", { method: "POST", body: JSON.stringify(payload) });
+                    notify(
+                        `آزمون «${saved.name}» ثبت شد. صحیح ${saved.totals.correct}، غلط ${saved.totals.wrong}، نزده ${saved.totals.blank}.`,
+                        "ok"
+                    );
+                    resetForm();
+                }
+            } catch (err) {
+                notify(err.message, "err");
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        $("delete-btn").addEventListener("click", async () => {
+            if (!editId) return;
+            if (!confirm("این آزمون حذف شود؟ این کار قابل بازگشت نیست.")) return;
+            try {
+                await api(`/exams/${encodeURIComponent(editId)}`, { method: "DELETE" });
+                location.href = `index.html${location.search}#/exams`;
+            } catch (err) {
+                notify(err.message, "err");
+            }
+        });
+
+        // ---------- Init ----------
+
+        async function init() {
+            $("exam-date").value = getShamsiDate();
+            renderSubjects();
+            $("back-link").href = "index.html" + location.search;
+
+            try {
+                const me = await api("/me");
+                $("title").textContent = editId ? "ویرایش آزمون" : "ثبت آزمون";
+                showForm(me.full_name);
+                if (editId) await loadForEdit();
+            } catch (err) {
+                if (err.status === 404) {
+                    $("title").textContent = "ثبت‌نام";
+                    $("sub").textContent = "اولین بار";
+                    $("register-card").classList.remove("hidden");
+                } else {
+                    $("title").textContent = "دسترسی محدود";
+                    $("sub").textContent = "";
+                    notify(err.message, "err");
+                }
+            }
+        }
+
+        init();
+    </script>
+</body>
+
+</html>
